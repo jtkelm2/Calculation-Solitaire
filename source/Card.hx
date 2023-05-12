@@ -1,13 +1,9 @@
 package;
 
-import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.input.mouse.FlxMouseEvent;
 import flixel.math.FlxMath;
-import flixel.math.FlxPoint;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
-import flixel.util.FlxColor;
 
 class Card extends FlxSprite
 {
