@@ -1,8 +1,8 @@
 package;
 
 import flixel.FlxSprite;
-// import flixel.addons.ui.FlxClickArea;
 import flixel.group.FlxGroup;
+import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
 
@@ -42,11 +42,14 @@ class Slot extends FlxSprite
 		cardsGrp = new FlxTypedGroup<Card>();
 		cards = [];
 		isReady = false;
+		highlight = false;
+		txt = new FlxText();
 
 		switch (slotType)
 		{
 			case DeckSlot:
 				loadGraphic("assets/FoundationSlot.png");
+				alpha = 0;
 				displayLimit = 5;
 				offsetX = -5;
 			case TableauSlot(rowIndex):
@@ -63,14 +66,22 @@ class Slot extends FlxSprite
 				txt.setBorderStyle(FlxTextBorderStyle.SHADOW, 0xFF808080);
 				txt.color = Globals.foundationColor;
 
-				Globals.signals.hoverChanged.add((card) -> {
-					if (card == null || card.faceUp != true) {resetText();}
-					else {
-						if (card.val == this.val) {highlightText();} else {lowlightText();}
-					}
-				});
+				Globals.signals.hoverChanged.add(handleHoverChange);
 		};
 		resetText();
+	}
+
+	override function update(elapsed:Float):Void
+	{
+		super.update(elapsed);
+		if (highlight)
+		{
+			txt.alpha = FlxMath.bound(txt.alpha + 0.1, 0.3, 1);
+		}
+		else
+		{
+			txt.alpha = FlxMath.bound(txt.alpha - 0.1, 0.3, 1);
+		}
 	}
 
 	public function addCard(card:Card)
@@ -92,7 +103,7 @@ class Slot extends FlxSprite
 	function updatePile():Void
 	{
 		var j:Int = cards.length;
-		
+
 		for (i in 0...cards.length)
 		{
 			j--;
@@ -107,32 +118,42 @@ class Slot extends FlxSprite
 			if (i > 0)
 			{
 				cards[j].canClick = false;
-				cards[j].demagnify();
 			}
 			else
 			{
 				cards[j].canClick = true;
 			}
 		}
-		switch (slotType) {
-			case FoundationSlot(_,_): cards[0].canClick = false;
-			case _: {}
+		switch (slotType)
+		{
+			case FoundationSlot(_, _):
+				cards[0].canClick = false;
+			case _:
+				{}
 		}
-	}
-
-	public function highlightText():Void
-	{
-		if (txt != null) {txt.alpha = 1;}
-	}
-
-	public function lowlightText():Void
-	{
-		if (txt != null) {txt.alpha = 0.3;}
 	}
 
 	public function resetText():Void
 	{
-		if (isReady) {highlightText();} else {lowlightText();}
+		highlight = isReady;
+	}
+
+	function handleHoverChange(card:Card):Void
+	{
+		if (card == null || !card.faceUp)
+		{
+			resetText();
+		}
+		else
+		{
+			switch (card.slot.slotType)
+			{
+				case FoundationSlot(_, _):
+					resetText();
+				case _:
+					highlight = (card.val == this.val);
+			}
+		}
 	}
 
 	public function occupied():Bool

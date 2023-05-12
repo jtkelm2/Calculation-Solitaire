@@ -27,6 +27,4 @@ class Globals
 
 	public static var signals:Signals = new Signals();
 	public static var events:Events = new Events();
-
-	public static var eventListener:Array<EventID> = [];
 }

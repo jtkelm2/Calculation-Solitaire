@@ -13,7 +13,8 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 
-enum GameState {
+enum GameState
+{
 	WaitingSelection;
 	CardSelected;
 	CardInMotion;
@@ -23,22 +24,34 @@ enum GameState {
 class PlayState extends FlxState
 {
 	var bg:FlxSprite;
+
 	var selectedCard:Null<Card>;
-	var hoveredCard(default,set):Null<Card>;
+
+	var hoverQueue:Array<Card>;
+	var hoveredCard(default, set):Null<Card>;
+
 	var slotsGrp:FlxTypedGroup<Slot>;
 	var slotsLookup:Array<Array<Slot>>;
 	var slotTextGrp:FlxTypedGroup<FlxText>;
+
 	var deck:Slot;
 	var deckText:FlxText;
+
 	var cards:Array<Card>;
-	var gameState:GameState;
-	var handle:Map<GameState,EventID -> Void>;
+
+	var gameState(default, default):GameState;
+	var handle:Map<GameState, EventID->Void>;
 
 	override public function create():Void
 	{
 		FlxG.console.registerObject("Globals", Globals);
 		gameState = WaitingSelection;
-		handle = [WaitingSelection => handleWaitingSelection, CardSelected => handleCardSelected, CardInMotion => handleCardInMotion, GameOver => handleGameOver];
+		handle = [
+			WaitingSelection => handleWaitingSelection,
+			CardSelected => handleCardSelected,
+			CardInMotion => handleCardInMotion,
+			GameOver => handleGameOver
+		];
 
 		Globals.cardWidth = 70;
 		Globals.cardHeight = 94;
@@ -62,6 +75,8 @@ class PlayState extends FlxState
 
 		bg = new FlxSprite(0, 0, "assets/Table.png");
 		add(bg);
+
+		hoverQueue = [];
 
 		slotsLookup = [for (_ in 0...5) []];
 		slotsGrp = new FlxTypedGroup<Slot>();
@@ -122,9 +137,9 @@ class PlayState extends FlxState
 	{
 		super.update(elapsed);
 		var event:EventID;
-		while (Globals.eventListener.length > 0)
+		while (Globals.events.queue.length > 0)
 		{
-			event = Globals.eventListener.pop();
+			event = Globals.events.queue.pop();
 			handle[gameState](event);
 		}
 	}
@@ -149,114 +164,192 @@ class PlayState extends FlxState
 		return slot;
 	}
 
-	function handleWaitingSelection(eventID:EventID):Void {
-		switch eventID {
-			case MouseOver(CardID(card)): {
-				if (card.canClick) {
-					hoveredCard = card;
-					card.magnify();
-				};
-			}
-			case MouseOut(CardID(card)): {
-				card.demagnify();
-				if (hoveredCard == card) {hoveredCard = null;}
-			}
-			case MouseUp(CardID(card)): {
-				if (card.canClick) {
-					card.highlight();
-					if (!card.faceUp) {card.flip();};
-					selectedCard = card;
-					gameState = CardSelected;
-				}
-			}
-            case _: {}
-		}
-	}
-
-	function handleCardSelected(eventID:EventID):Void {
-		switch eventID {
-			case MouseOver(CardID(card)): {
-				if (card.canClick) {
-					hoveredCard = card;
-					card.magnify();
-				};
-			}
-			case MouseOut(CardID(card)): {
-				card.demagnify();
-				if (hoveredCard == card) {hoveredCard = null;}
-			}
-			case MouseUp(CardID(card)): {
-				if (card.canClick && card.slot.slotType != DeckSlot) {
-					card.highlight();
-					selectedCard.lowlight();
-					selectedCard = card;
-				}
-			}
-            case MouseDown(SlotID(slot)): {
-				if (willAccept(slot, selectedCard)) {
-					selectedCard.moveTo(slot);
-					selectedCard = null;
-					gameState = CardInMotion;
-				} else {
-					selectedCard.lowlight();
-					selectedCard = null;
-					gameState = WaitingSelection;
-				}
-			}
-			case _: {}
-		}
-	}
-
-	function handleCardInMotion(eventID:EventID):Void {
-		switch eventID {
-			case CardFinishedTravel(card):
-				gameState = WaitingSelection;
-				switch (card.slot.slotType) {
-					case FoundationSlot(rowIndex, foundationIndex): {
-						if (foundationIndex < 13) {
-							slotsLookup[rowIndex][foundationIndex+1].isReady = true;
+	function willAccept(slot:Slot, card:Card):Bool
+	{
+		if (slot.cards.length == slot.displayLimit)
+		{
+			return false;
+		};
+		switch slot.slotType
+		{
+			case FoundationSlot(rowIndex, foundationIndex):
+				{
+					if (card.val == slot.val)
+					{
+						if (foundationIndex == 1)
+						{
+							return true;
+						}
+						else
+						{
+							return slotsLookup[rowIndex][foundationIndex - 1].occupied();
 						}
 					}
+					else
+					{
+						return false;
+					}
+				}
+			case TableauSlot(_):
+				return true;
+			case DeckSlot:
+				return false;
+		}
+	}
+
+	function handleWaitingSelection(eventID:EventID):Void
+	{
+		switch eventID
+		{
+			case MouseOver(CardID(card)):
+				{
+					addHover(card);
+				}
+			case MouseOut(CardID(card)):
+				{
+					removeHover(card);
+				}
+			case MouseUp(CardID(card)):
+				{
+					if (card.canClick)
+					{
+						card.highlight();
+						if (!card.faceUp)
+						{
+							card.flip((_) ->
+							{
+								refreshHoveredCard();
+							});
+						};
+						selectedCard = card;
+						gameState = CardSelected;
+					}
+				}
+			case _:
+				{}
+		}
+	}
+
+	function handleCardSelected(eventID:EventID):Void
+	{
+		switch eventID
+		{
+			case MouseOver(CardID(card)):
+				{
+					addHover(card);
+				}
+			case MouseOut(CardID(card)):
+				{
+					removeHover(card);
+				}
+			case MouseUp(CardID(card)):
+				{
+					if (card.canClick && card.slot.slotType != DeckSlot)
+					{
+						card.highlight();
+						selectedCard.lowlight();
+						selectedCard = card;
+					}
+				}
+			case MouseDown(SlotID(slot)):
+				{
+					if (willAccept(slot, selectedCard))
+					{
+						selectedCard.moveTo(slot);
+						selectedCard = null;
+						gameState = CardInMotion;
+					}
+					else
+					{
+						if (selectedCard.slot.slotType != DeckSlot)
+						{
+							selectedCard.lowlight();
+							selectedCard = null;
+							gameState = WaitingSelection;
+						}
+					}
+				}
+			case _:
+				{}
+		}
+	}
+
+	function handleCardInMotion(eventID:EventID):Void
+	{
+		switch eventID
+		{
+			case CardFinishedTravel(card):
+				gameState = WaitingSelection;
+				refreshHoveredCard();
+				switch (card.slot.slotType)
+				{
+					case FoundationSlot(rowIndex, foundationIndex):
+						if (foundationIndex < 13)
+						{
+							var nextSlot = slotsLookup[rowIndex][foundationIndex + 1];
+							nextSlot.isReady = true;
+							nextSlot.resetText();
+						}
 					case _: {}
 				}
-			case MouseOver(CardID(card)): {
-				if (card.canClick) {
-					hoveredCard = card;
-					card.magnify();
-				};
-			}
-			case MouseOut(CardID(card)): {
-				card.demagnify();
-				if (hoveredCard == card) {hoveredCard = null;}
-			}
-			case _: {};
-		}
-	}
-
-	function handleGameOver(eventID:EventID):Void {
-		switch eventID {
-			case _: {}
-		}
-	}
-
-	function willAccept(slot:Slot, card:Card):Bool {
-		if (slot.cards.length == slot.displayLimit) {return false;};
-		switch slot.slotType {
-			case FoundationSlot(rowIndex, foundationIndex): {
-					if (card.val == slot.val) {
-						if (foundationIndex == 1) {return true;}
-						else {return slotsLookup[rowIndex][foundationIndex - 1].occupied();}
-					}
-					else {return false;}
+			case MouseOver(CardID(card)):
+				{
+					addHover(card, false);
 				}
-			case TableauSlot(_): return true;
-			case DeckSlot: return false;
+			case MouseOut(CardID(card)):
+				{
+					removeHover(card, false);
+				}
+			case _:
+				{};
 		}
 	}
 
-	function set_hoveredCard(card:Null<Card>):Null<Card> {
+	function handleGameOver(eventID:EventID):Void
+	{
+		switch eventID
+		{
+			case _:
+				{}
+		}
+	}
+
+	function addHover(card, ?refreshHover:Bool = true):Void
+	{
+		hoverQueue.push(card);
+		hoverQueue.sort((c1, c2) ->
+		{
+			if (c1.isBelow(c2))
+			{
+				return -1;
+			}
+			else
+			{
+				return 1;
+			}
+		});
+		if (refreshHover)
+		{
+			refreshHoveredCard();
+		};
+	}
+
+	function removeHover(card, ?refreshHover:Bool = true):Void
+	{
+		hoverQueue.remove(card);
+		if (refreshHover)
+			refreshHoveredCard();
+	}
+
+	function set_hoveredCard(card:Null<Card>):Null<Card>
+	{
 		hoveredCard = card;
 		Globals.signals.hoverChanged.dispatch(card);
 		return card;
+	}
+
+	function refreshHoveredCard():Void
+	{
+		hoveredCard = hoverQueue[hoverQueue.length - 1];
 	}
 }

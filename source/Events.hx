@@ -21,11 +21,14 @@ enum EventID
 
 class Events
 {
+	public var queue:Array<EventID>;
+
 	public function initClickable(clickableID:ObjectID)
 	{
 		var pixelPerfect:Bool;
 		var clickable:FlxObject;
-		switch (clickableID) {
+		switch (clickableID)
+		{
 			case CardID(card):
 				clickable = card;
 				pixelPerfect = true;
@@ -35,20 +38,23 @@ class Events
 		}
 		FlxMouseEvent.add(clickable, (_) ->
 		{
-			Globals.eventListener.push(MouseDown(clickableID));
+			Globals.events.queue.push(MouseDown(clickableID));
 		}, (_) ->
 			{
-				Globals.eventListener.push(MouseUp(clickableID));
+				Globals.events.queue.push(MouseUp(clickableID));
 			}, (_) ->
 			{
-				Globals.eventListener.push(MouseOver(clickableID));
+				Globals.events.queue.push(MouseOver(clickableID));
 			}, (_) ->
 			{
-				Globals.eventListener.push(MouseOut(clickableID));
+				Globals.events.queue.push(MouseOut(clickableID));
 			}, true, true, pixelPerfect);
 	}
 
-	public function new() {}
+	public function new()
+	{
+		queue = [];
+	}
 }
 
 class Signals
