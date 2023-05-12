@@ -96,6 +96,10 @@ class Slot extends FlxSprite
 	{
 		var card = cards.pop();
 		cardsGrp.remove(card);
+		if (slotType == DeckSlot)
+		{
+			Globals.signals.cardDrawn.dispatch(card);
+		}
 		updatePile();
 		return card;
 	}

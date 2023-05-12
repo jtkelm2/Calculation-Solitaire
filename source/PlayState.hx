@@ -101,6 +101,10 @@ class PlayState extends FlxState
 		Globals.signals.cardDrawn.add((_) ->
 		{
 			deckText.text = "x " + deck.cards.length;
+			if (deck.cards.length == 0)
+			{
+				Globals.signals.outOfCards.dispatch();
+			}
 		});
 		Globals.signals.outOfCards.add(() ->
 		{
@@ -244,7 +248,7 @@ class PlayState extends FlxState
 				}
 			case MouseUp(CardID(card)):
 				{
-					if (card.canClick && card.slot.slotType != DeckSlot)
+					if (card.canClick && selectedCard.slot.slotType != DeckSlot && card.slot.slotType != DeckSlot)
 					{
 						card.highlight();
 						selectedCard.lowlight();
