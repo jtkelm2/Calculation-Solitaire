@@ -329,11 +329,8 @@ class PlayState extends FlxState
 						if (selectedCard.slot.slotType != DeckSlot)
 						{
 							selectedCard.lowlight();
-							new FlxTimer().start(0.1, _ ->
-							{
-								selectedCard = null;
-								gameState = WaitingSelection;
-							});
+							selectedCard = null;
+							gameState = WaitingSelection;
 						}
 					}
 				}
