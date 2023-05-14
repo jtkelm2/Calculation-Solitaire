@@ -20,11 +20,12 @@ class Globals
 	public static var travelTime:Float;
 
 	public static var foundationColor:FlxColor;
+	public static var tableauColor:FlxColor;
 
 	public static var valToString:Map<Int, String> = [
 		1 => "A", 2 => "2", 3 => "3", 4 => "4", 5 => "5", 6 => "6", 7 => "7", 8 => "8", 9 => "9", 10 => "10", 11 => "J", 12 => "Q", 13 => "K"
 	];
 
-	public static var signals:Signals = new Signals();
-	public static var events:Events = new Events();
+	public static var signals:Signals;
+	public static var events:Events;
 }

@@ -10,6 +10,11 @@ enum ObjectID
 	SlotID(slot:Slot);
 }
 
+enum KeyID
+{
+	Spacebar;
+}
+
 enum EventID
 {
 	MouseDown(objectID:ObjectID);
@@ -17,6 +22,8 @@ enum EventID
 	MouseOver(objectID:ObjectID);
 	MouseOut(objectID:ObjectID);
 	CardFinishedTravel(card:Card);
+	KeyPressed(key:KeyID);
+	KeyReleased(key:KeyID);
 }
 
 class Events
@@ -60,10 +67,10 @@ class Events
 class Signals
 {
 	public var gameOver = new FlxSignal();
-	public var gameReset = new FlxSignal();
 	public var cardDrawn = new FlxTypedSignal<Card->Void>();
 	public var outOfCards = new FlxSignal();
 	public var hoverChanged = new FlxTypedSignal<Null<Card>->Void>();
+	public var stateChanged = new FlxSignal();
 
 	public function new() {}
 }

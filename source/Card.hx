@@ -1,9 +1,11 @@
 package;
 
 import flixel.FlxSprite;
+import flixel.input.mouse.FlxMouseEvent;
 import flixel.math.FlxMath;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
+import flixel.util.FlxTimer;
 
 class Card extends FlxSprite
 {
@@ -127,6 +129,19 @@ class Card extends FlxSprite
 		return (slot.cards.indexOf(this) < slot.cards.indexOf(card));
 	}
 
+	public function victoryDance()
+	{
+		var waitTime:Float;
+		switch slot.slotType
+		{
+			case FoundationSlot(rowIndex, foundationIndex):
+				waitTime = (rowIndex + foundationIndex) % 2;
+			case _:
+				return;
+		}
+		new FlxTimer().start(waitTime, _ -> flip(card -> card.victoryDance()));
+	}
+
 	function set_canClick(bool:Bool):Bool
 	{
 		if (!bool)
@@ -135,5 +150,16 @@ class Card extends FlxSprite
 		}
 		canClick = bool;
 		return bool;
+	}
+
+	override public function destroy():Void
+	{
+		// Make sure that this object is removed from the FlxMouseEventManager for GC
+		FlxMouseEvent.remove(this);
+		if (slot != null)
+		{
+			slot.cardsGrp.remove(this);
+		}
+		super.destroy();
 	}
 }

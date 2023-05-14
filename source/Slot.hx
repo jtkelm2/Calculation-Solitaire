@@ -2,6 +2,7 @@ package;
 
 import flixel.FlxSprite;
 import flixel.group.FlxGroup;
+import flixel.input.mouse.FlxMouseEvent;
 import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
@@ -11,6 +12,7 @@ enum SlotType
 	DeckSlot;
 	TableauSlot(rowIndex:Int);
 	FoundationSlot(rowIndex:Int, foundationIndex:Int);
+	PreviewSlot;
 }
 
 class Slot extends FlxSprite
@@ -36,6 +38,7 @@ class Slot extends FlxSprite
 		this.slotType = slotType;
 		offsetX = -16;
 		offsetY = 0;
+		displayLimit = 52;
 		alpha = 0.8;
 		width = Globals.cardWidth;
 		height = Globals.cardHeight;
@@ -67,6 +70,12 @@ class Slot extends FlxSprite
 				txt.color = Globals.foundationColor;
 
 				Globals.signals.hoverChanged.add(handleHoverChange);
+			case PreviewSlot:
+				loadGraphic("assets/FoundationSlot.png");
+				alpha = 0;
+				displayLimit = 4;
+				offsetX = 0;
+				offsetY = 20;
 		};
 		resetText();
 	}
@@ -92,14 +101,19 @@ class Slot extends FlxSprite
 		card.slot = this;
 	}
 
-	public function drawCard():Null<Card>
+	public function drawCard(?cardToDraw:Card):Null<Card>
 	{
-		var card = cards.pop();
-		cardsGrp.remove(card);
-		if (slotType == DeckSlot)
+		var card:Card;
+		if (cardToDraw != null)
 		{
-			Globals.signals.cardDrawn.dispatch(card);
+			card = cardToDraw;
 		}
+		else
+		{
+			card = cards[cards.length - 1];
+		}
+		cards.remove(card);
+		cardsGrp.remove(card);
 		updatePile();
 		return card;
 	}
@@ -131,7 +145,10 @@ class Slot extends FlxSprite
 		switch (slotType)
 		{
 			case FoundationSlot(_, _):
-				cards[0].canClick = false;
+				if (occupied())
+				{
+					cards[0].canClick = false;
+				}
 			case _:
 				{}
 		}
@@ -163,5 +180,14 @@ class Slot extends FlxSprite
 	public function occupied():Bool
 	{
 		return (cards.length > 0);
+	}
+
+	override public function destroy():Void
+	{
+		// Make sure that this object is removed from the FlxMouseEventManager for GC
+		FlxMouseEvent.remove(this);
+		txt.destroy();
+		cardsGrp.destroy();
+		super.destroy();
 	}
 }
