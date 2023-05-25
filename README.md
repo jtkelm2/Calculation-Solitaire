@@ -1,5 +1,5 @@
 # Calculation Solitaire
 
-My first test project in HaxeFlixel, this is a barebones implementation of the game of Calculation (a simple but challenging solitaire variant). Go to `http://jtkelm2.github.io/Calculation-Solitaire/` to play!
+My first test project in HaxeFlixel, this is a barebones implementation of the game of Calculation (a simple but challenging solitaire variant). Go to [http://jtkelm2.github.io/Calculation-Solitaire/](http://jtkelm2.github.io/Calculation-Solitaire/) to play!
 
-Made possible with a Github workflow provided by `https://github.com/HaxeFlixel/game-jam-template`. Card sprites courtesy of `https://drawsgood.itch.io/8bit-deck-card-assets`.
+Made possible with a Github workflow provided by [https://github.com/HaxeFlixel/game-jam-template](https://github.com/HaxeFlixel/game-jam-template). Card sprites courtesy of [https://drawsgood.itch.io/8bit-deck-card-assets](https://drawsgood.itch.io/8bit-deck-card-assets).
